@@ -1,10 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
-    FlatList, SafeAreaView, Alert
+    FlatList,  Alert
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import {db} from '@/FirebaseConfig'
+import {doc, getDoc, setDoc} from 'firebase/firestore';
+
 
 // --- MÀU SẮC ---
 const Colors = {
@@ -17,17 +20,21 @@ const Colors = {
 };
 
 // --- DỮ LIỆU GIẢ ---
-const DATES = [
-    { id: '1', day: 'T2', date: '18/12' },
-    { id: '2', day: 'T3', date: '19/12' },
-    { id: '3', day: 'T4', date: '20/12' }, // Giả sử hôm nay là ngày 20
-    { id: '4', day: 'T5', date: '21/12' },
-    { id: '5', day: 'T6', date: '22/12' },
-    { id: '6', day: 'T7', date: '23/12' },
-    { id: '7', day: 'CN', date: '24/12' },
-];
 
-let Dates: string[] = []
+
+const formatDateID = (date : Date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+};
+
+
+let dates: Date[] = []
+let datas: string[] = []
+let avai_date: string[] = []
+
 
 
 const ROOMS = [1, 2, 3];
@@ -38,13 +45,68 @@ export default function SelectShowtimeScreen() {
     const params = useLocalSearchParams(); // Lấy tên phim từ trang trước
 
     // --- STATE QUẢN LÝ LỰA CHỌN ---
-    const [selectedDate, setSelectedDate] = useState('1'); // Mặc định chọn ngày 20 (id=3)
-    const [selectedRoom, setSelectedRoom] = useState(1); // Mặc định rạp đầu
+    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedRoom, setSelectedRoom] = useState(''); // Mặc định rạp đầu
     const [selectedTime, setSelectedTime] = useState(''); // Chưa chọn giờ
 
-    // useEffect(() => {
-    //     const
-    // }, [])
+    useEffect(() => {
+        const fetchData = async () => {
+            try{
+                for (let i = 0; i < 10; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + i);
+                    dates.push(d);
+                }
+
+                // fetch the collection
+                for (let i = 0; i < 10; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const doc_id = formatDateID(dates[i]) + "_p" + ROOMS[j];
+                        const ref = doc(db, 'schedule', doc_id);
+                        const snapshot = await getDoc(ref);
+
+                        if (snapshot.exists()) {
+                            //console.log(datas.length);
+                            const temp = snapshot.data()
+                            if (temp.t0800 === params.id) datas.push(doc_id + '_' + '08:00');
+                            if (temp.t1200 === params.id) datas.push(doc_id + '_' + '12:00');
+                            if (temp.t1600 === params.id) datas.push(doc_id + '_' + '16:00');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchData();
+        for (let i = 0; i< datas.length; i++) {
+            let temp = datas[i].split('_')[0];
+            if (!avai_date.includes(temp)) avai_date.push(temp);
+        }
+
+    }, [])
+
+    const avai_room = (date: string) => {
+        let room : string[] = []
+        for (let i = 0; i< datas.length; i++) {
+            let temp = datas[i].split('_')[1];
+            if (datas[i].split('_')[0] === date
+                && !room.includes(temp)) room.push(temp);
+        }
+        return room;
+    }
+
+    const avai_time = (date : string, room: string) => {
+        let time : string[] = []
+        for (let i = 0; i< datas.length; i++) {
+            let temp = datas[i].split('_')[2];
+            if (datas[i].split('_')[0] === date
+                && datas[i].split('_')[1] === room
+                && !time.includes(temp)) time.push(temp);
+        }
+        return time;
+    }
 
     const handleNext = () => {
         if (!selectedTime) {
@@ -55,8 +117,7 @@ export default function SelectShowtimeScreen() {
         router.push({
             pathname: '/guest/booking/seat',
             params: {
-                id: params.id,
-                movieName: params.movieName,
+                ...params,
                 date: selectedDate, // Truyền ngày đã chọn
                 room: selectedRoom, // Truyền rạp đã chọn
                 time: selectedTime // Truyền giờ đã chọn
@@ -87,18 +148,18 @@ export default function SelectShowtimeScreen() {
                 <View style={{ height: 80 }}>
                     <FlatList
                         horizontal
-                        data={DATES}
+                        data={avai_date}
                         showsHorizontalScrollIndicator={false}
-                        keyExtractor={item => item.id}
+                        //keyExtractor={item}
                         renderItem={({ item }) => {
-                            const isSelected = selectedDate === item.id;
+                            const isSelected = selectedDate === item;
                             return (
                                 <TouchableOpacity
                                     style={[styles.dateItem, isSelected && styles.dateItemActive]}
-                                    onPress={() => setSelectedDate(item.id)}
+                                    onPress={() => setSelectedDate(item)}
                                 >
-                                    <Text style={[styles.dateDay, isSelected && styles.textWhite]}>{item.day}</Text>
-                                    <Text style={[styles.dateNum, isSelected && styles.textWhite]}>{item.date}</Text>
+                                    {/*<Text style={[styles.dateDay, isSelected && styles.textWhite]}>{item.day}</Text>*/}
+                                    <Text style={[styles.dateNum, isSelected && styles.textWhite]}>{item}</Text>
                                 </TouchableOpacity>
                             );
                         }}
@@ -106,16 +167,16 @@ export default function SelectShowtimeScreen() {
                 </View>
 
                 {/* 3. CHỌN RẠP (LIST DỌC) */}
-                <Text style={styles.sectionTitle}>Chọn rạp</Text>
-                {ROOMS.map((room) => {
-                    const isSelected = selectedRoom === room;
+                <Text style={styles.sectionTitle}>Chọn phòng chiếu</Text>
+                {avai_room(selectedDate).map((item) => {
+                    const isSelected = selectedRoom === item;
                     return (
                         <TouchableOpacity
-                            key={room}
+                            key={item}
                             style={[styles.cinemaItem, isSelected && styles.cinemaItemActive]}
-                            onPress={() => setSelectedRoom(room)}
+                            onPress={() => setSelectedRoom(item)}
                         >
-                            <Text style={styles.cinemaName}>Phòng chiếu số {room}</Text>
+                            <Text style={styles.cinemaName}>Phòng chiếu số {item}</Text>
                             {/*<Text style={styles.cinemaAddress}>{cinema.address}</Text>*/}
                         </TouchableOpacity>
                     );
@@ -124,19 +185,19 @@ export default function SelectShowtimeScreen() {
                 {/* 4. CHỌN SUẤT CHIẾU (GRID) */}
                 <Text style={styles.sectionTitle}>Chọn suất chiếu</Text>
                 <View style={styles.timeContainer}>
-                    {TIMES.map((time, index) => {
-                        const isSelected = selectedTime === time;
+                    {avai_time(selectedDate, selectedRoom).map((item) => {
+                        const isSelected = selectedTime === item;
                         return (
                             <TouchableOpacity
-                                key={index}
+                                key={item}
                                 style={[styles.timeItem, isSelected && styles.timeItemActive]}
-                                onPress={() => setSelectedTime(time)}
+                                onPress={() => setSelectedTime(item)}
                             >
                                 <Text style={[styles.timeText, isSelected && styles.textWhite]}>
-                                    {time}
+                                    {item}
                                 </Text>
                                 <Text style={[styles.roomText, isSelected && styles.textWhite]}>
-                                    Phòng {index + 1}
+                                    Phòng {item}
                                 </Text>
                             </TouchableOpacity>
                         );

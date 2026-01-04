@@ -1,12 +1,21 @@
 import {Text, TouchableOpacity, View, Image} from "react-native";
-import {Link} from "expo-router";
+import {useRouter} from "expo-router";
 
 const MovieCard=
     ({id, poster_path, title, vote_average, release_date} : MovieDetails) => {
         //console.log(poster_path);
+        const router = useRouter();
         return (
-            <Link href = {`./${id}`} asChild>
-                <TouchableOpacity className="w-[30%]">
+
+                <TouchableOpacity className="w-[30%]"
+                    onPress={() => {
+                        router.push({
+                            pathname: `./app/guest/${id}`,
+                            params: {
+
+                            }
+                        })
+                    } }>
                     <Image
                         source={{
                             uri: poster_path
@@ -19,7 +28,7 @@ const MovieCard=
 
                     <Text className="text-sm font-bold text-black mt-2">{title}</Text>
                 </TouchableOpacity>
-            </Link>
+
 
         )
     }

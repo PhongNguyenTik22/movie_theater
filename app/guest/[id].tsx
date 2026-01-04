@@ -26,8 +26,8 @@ const MovieInfo =({ label, value} :MovieInfoProps)=>{
 const MovieDetails_Admin = () => {
     const router = useRouter();
 
-    const { id } = useLocalSearchParams();
-    const { data: movie, loading } = useFetch(() => fetchMovieDetails(id as string))
+    const params = useLocalSearchParams();
+    const { data: movie, loading } = useFetch(() => fetchMovieDetails(params.id as string))
 
     return (
         <View className= "bg-primary flex-1">
@@ -59,10 +59,7 @@ const MovieDetails_Admin = () => {
                     onPress={() => {
                         router.push({
                             pathname: "/guest/booking/date_room_time",
-                            params: {
-                                id: movie?.id,
-                                name: movie?.title
-                            }
+                            params: params
                         })
                     }}
                 >

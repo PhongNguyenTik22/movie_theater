@@ -44,7 +44,12 @@ export default function App () {
                 if (role === 'admin') {
                     router.push("/admin/home_admin");
                 } else if (role === 'guest') {
-                    router.push("/guest/home_guest");
+                    router.push({
+                        pathname: "/guest/home_guest",
+                        params: {
+                            user: uid
+                        }
+                    });
                 } else {
                     Alert.alert('Access Denied', 'Your account has no assigned role.');
                     // Optional: Force logout if they have no role

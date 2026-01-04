@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Để lấy icon kính lúp
 import {db} from '@/FirebaseConfig'
-import {doc, getDoc, setDoc} from 'firebase/firestore';
-import {useRouter} from "expo-router";
+import {doc, DocumentData, getDoc, setDoc} from 'firebase/firestore';
+import {useLocalSearchParams, useRouter} from "expo-router";
 import useFetch from "@/services/useFetch"
 import {fetchMovie, fetchMovieDetails} from "@/services/tdmb_api_config";
 import MovieCard from "@/app/guest/render_poster_guest";
@@ -48,6 +48,7 @@ let id_list: string[] = []
 
 export default function HomeScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
 
     const [movies, setMovies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,38 +58,31 @@ export default function HomeScreen() {
             const d = new Date();
             const doc_id = formatDateID(d);
             const ref = doc(db, 'available_film', doc_id);
-            const snapshot = await getDoc(ref);
+            let dates: Date[] = [];
+            const ROOMS = [1, 2, 3];
+            for (let i = 0; i < 10; i++) {
+                const d2 = new Date();
+                d2.setDate(d2.getDate() + i);
+                dates.push(d2);
+            }
 
-            if (snapshot.exists()) {
-                const temp = snapshot.data();
-                id_list = temp.idList;
-            } else {
-                let dates: Date[] = [];
-                const ROOMS = [1, 2, 3];
-                for (let i = 0; i < 10; i++) {
-                    const d2 = new Date();
-                    d2.setDate(d2.getDate() + i);
-                    dates.push(d2);
-                }
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const doc_id2 = formatDateID(dates[i]) + "_p" + ROOMS[j];
+                    const ref2 = doc(db, 'schedule', doc_id2);
+                    const snapshot2 = await getDoc(ref2);
 
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        const doc_id2 = formatDateID(dates[i]) + "_p" + ROOMS[j];
-                        const ref2 = doc(db, 'schedule', doc_id2);
-                        const snapshot2 = await getDoc(ref2);
-
-                        if (snapshot2.exists()) {
-                            const data = snapshot2.data();
-                            if (data.t0800 !== '' && !id_list.includes(data.t0800)) id_list.push(data.t0800);
-                            if (data.t1200 !== '' && !id_list.includes(data.t1200)) id_list.push(data.t1200);
-                            if (data.t1600 !== '' && !id_list.includes(data.t1600)) id_list.push(data.t1600);
-                        }
+                    if (snapshot2.exists()) {
+                        const data = snapshot2.data();
+                        if (data.t0800 !== '' && !id_list.includes(data.t0800)) id_list.push(data.t0800);
+                        if (data.t1200 !== '' && !id_list.includes(data.t1200)) id_list.push(data.t1200);
+                        if (data.t1600 !== '' && !id_list.includes(data.t1600)) id_list.push(data.t1600);
                     }
                 }
-                await setDoc(ref, {
-                    idList: id_list,
-                })
             }
+            await setDoc(ref, {
+                idList: id_list,
+            })
         }
 
         try {
@@ -151,9 +145,30 @@ export default function HomeScreen() {
                 <FlatList
                     data={movies}
                     renderItem={({item}) => (
-                        <MovieCard
-                            {...item}
-                        />
+                        <TouchableOpacity className="w-[30%]"
+                                          onPress={() => {
+                                              console.log(item.id);
+                                              router.push({
+                                                  pathname: `./${item.id}`,
+                                                  params: {
+                                                        ...params,
+                                                      id: item.id,
+                                                      name: item.title
+                                                  }
+                                              })
+                                          } }>
+                            <Image
+                                source={{
+                                    uri: item.poster_path
+                                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                                        : 'https://placehold.co/600x400/1a1a1a/ffffff.png'
+                                }}
+                                className="w-full h-52 rounded-lg"
+                                resizeMode="cover"
+                            />
+
+                            <Text className="text-sm font-bold text-black mt-2">{item.title}</Text>
+                        </TouchableOpacity>
                     )}
                     keyExtractor={(item) => item.id.toString()}
                     numColumns={3}
