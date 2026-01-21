@@ -45,6 +45,7 @@ const TIMES = ['08:00', '12:00', '16:00'];
 export default function SelectShowtimeScreen() {
     const router = useRouter();
     const params = useLocalSearchParams(); // Lấy tên phim từ trang trước
+    //console.log(params.id);
 
     // --- STATE QUẢN LÝ LỰA CHỌN ---
     const [selectedDate, setSelectedDate] = useState('');
@@ -91,6 +92,9 @@ export default function SelectShowtimeScreen() {
     useFocusEffect(
         useCallback(()=>{
             setLoading(true)
+            datas = []
+            dates = []
+            avai_date = []
             fetchData()
         }, [])
     )
