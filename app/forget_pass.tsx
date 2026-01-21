@@ -6,7 +6,7 @@ import {
 import {sendPasswordResetEmail} from 'firebase/auth';
 import { auth } from '../FirebaseConfig.ts';
 import {Colors, styles} from "./default_style.tsx"
-import {router, useRouter} from "expo-router";
+import {useRouter} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 
 
@@ -27,7 +27,9 @@ export default function ResetPassScreen() {
             router.push("/App");
 
         } catch (error: any) {
-            Alert.alert('Lỗi không thể thay đổi mật khẩu', error.message);
+            let errorMessage = error.code;
+            if (error.code === 'auth/invalid-email') errorMessage = 'Email không đúng cú pháp';
+            Alert.alert('Lỗi', errorMessage);
         }
     }
 

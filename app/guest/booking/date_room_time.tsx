@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
     FlatList, Alert, ActivityIndicator
@@ -6,7 +6,7 @@ import {
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {db} from '@/FirebaseConfig'
-import {doc, getDoc, setDoc} from 'firebase/firestore';
+import {doc, getDoc} from 'firebase/firestore';
 
 
 // --- MÀU SẮC ---

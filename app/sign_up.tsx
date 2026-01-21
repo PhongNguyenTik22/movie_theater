@@ -1,7 +1,7 @@
 // screens/SignUpScreen.tsx
 import React, { useState } from 'react';
 import {
-    View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet,
+    View, Text, TextInput, TouchableOpacity, Alert,
     StatusBar, ScrollView
 } from 'react-native';
 import {createUserWithEmailAndPassword, sendEmailVerification} from 'firebase/auth';
@@ -47,10 +47,13 @@ export default function SignUpScreen() {
             router.push("/App");
 
         } catch (error: any) {
-            console.error(error);
-            if (error.code === 'auth/email-already-in-use')
-                Alert.alert('Tài khoản email đã tồn tại');
-            else Alert.alert('Lỗi không thể đăng kí tài khoản mới', error.message);
+            let errorMessage = error.code;
+            if (error.code === 'auth/invalid-email') errorMessage = 'Email không đúng cú pháp';
+            if (error.code === 'auth/user-not-found') errorMessage = 'Không tìm thấy nguười dùng';
+            if (error.code === 'auth/wrong-password') errorMessage = 'Sai mật khẩu';
+            if (error.code === 'auth/email-already-in-use') errorMessage = 'Email đã được dùng để đăng kí cho một tài khoản khác';
+
+            Alert.alert('Lỗi', errorMessage);
             return
         }
     }

@@ -13,15 +13,12 @@ export default function App () {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter email and password');
+            Alert.alert('Lỗi', 'Hãy nhập đầy đủ thông tin');
             return;
         }
-
-        setLoading(true);
 
         try {
             // 1. Authenticate with Firebase Auth
@@ -57,25 +54,16 @@ export default function App () {
                             user: uid
                         }
                     });
-                } else {
-                    Alert.alert('Access Denied', 'Your account has no assigned role.');
-                    // Optional: Force logout if they have no role
-                    auth.signOut();
                 }
-            } else {
-                Alert.alert('Error', 'User profile data not found in database.');
             }
-
         } catch (error: any) {
             // Firebase Auth errors (e.g., wrong password, user not found)
             let errorMessage = error.code;
-            if (error.code === 'auth/invalid-email') errorMessage = 'Invalid email format.';
-            if (error.code === 'auth/user-not-found') errorMessage = 'User not found.';
-            if (error.code === 'auth/wrong-password') errorMessage = 'Incorrect password.';
+            if (error.code === 'auth/invalid-email') errorMessage = 'Email không đúng cú pháp';
+            if (error.code === 'auth/user-not-found') errorMessage = 'Không tìm thấy nguười dùng';
+            if (error.code === 'auth/wrong-password') errorMessage = 'Sai mật khẩu';
 
-            Alert.alert('Login Error', errorMessage);
-        } finally {
-            setLoading(false);
+            Alert.alert('Lỗi đăng nhập', errorMessage);
         }
     };
 

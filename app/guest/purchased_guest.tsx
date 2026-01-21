@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,8 +9,7 @@ import {
     Alert,
     StatusBar
 } from 'react-native';
-import { Pressable } from 'react-native-gesture-handler';
-import {useLocalSearchParams, Stack, useFocusEffect} from 'expo-router';
+import {useLocalSearchParams, useFocusEffect} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {doc, DocumentData, getDoc, setDoc} from 'firebase/firestore';
 import {db} from '@/FirebaseConfig'
@@ -20,11 +19,6 @@ const extractID = (ticket_id: string, item: number) => {
     return ticket_id.split('_')[item];
 }
 
-// const keySpawn = (ticket_id: string) => {
-//     return extractID(ticket_id, 0) + extractID(ticket_id, 1)
-//         + extractID(ticket_id, 2) + extractID(ticket_id, 3)
-// }
-
 const formatDateID = (date : Date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
@@ -32,10 +26,6 @@ const formatDateID = (date : Date) => {
 
     return `${day}-${month}-${year}`;
 };
-
-// --- Components ---
-
-
 
 // --- Main Screen ---
 
@@ -66,28 +56,28 @@ export default function MyTicketsScreen() {
                 {/* Box Body */}
                 <View style={styles.ticketBody}>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Date:</Text>
+                        <Text style={styles.label}>Ngày chiếu:</Text>
                         <Text style={styles.value}>{extractID(item, 0)}</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Time:</Text>
+                        <Text style={styles.label}>Thời gian:</Text>
                         <Text style={styles.value}>{extractID(item, 2)}</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Room:</Text>
+                        <Text style={styles.label}>Phòng:</Text>
                         <Text style={styles.value}>{extractID(item, 1)}</Text>
                     </View>
 
                     <View style={styles.divider} />
 
                     <View style={styles.row}>
-                        <Text style={styles.label}>Seats:</Text>
+                        <Text style={styles.label}>Ghế:</Text>
                         <Text style={styles.value}>{extractID(item, 3)}</Text>
                     </View>
 
                     <View style={styles.divider} />
 
-                    <Text style={styles.sectionTitle}>Food Order</Text>
+                    <Text style={styles.sectionTitle}>Đồ ăn, thức uống đã đặt</Text>
                     <Text style={styles.foodText}>Combo 1: {extractID(item, 4).split(',')[0]}</Text>
                     <Text style={styles.foodText}>Bắp phô mai: {extractID(item, 4).split(',')[1]}</Text>
                     <Text style={styles.foodText}>Nước ngọt: {extractID(item, 4).split(',')[2]}</Text>
@@ -101,7 +91,7 @@ export default function MyTicketsScreen() {
                             onRemove(item);
                         }}
                     >
-                        <Text style={styles.removeButtonText}>Remove Ticket</Text>
+                        <Text style={styles.removeButtonText}>Xóa vé</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -136,11 +126,6 @@ export default function MyTicketsScreen() {
     }
 
     // 2. Fetch Data
-    // useEffect(() => {
-    //     //setTickets([])
-    //     loadTicket();
-    // }, []);
-
     useFocusEffect(
         useCallback(()=>{
             //setLoading(true);
@@ -148,7 +133,7 @@ export default function MyTicketsScreen() {
         }, [])
     )
 
-    const mockRemoveTicket = async (ticketId: string) => {
+    const removeTicket = async (ticketId: string) => {
         console.log(`Deleting ticket ${ticketId} from database...`);
         try {
             const doc_id = extractID(ticketId, 0);
@@ -173,16 +158,16 @@ export default function MyTicketsScreen() {
     // 3. Handle Removal Logic
     const handleRemovePress = (ticketId: string) => {
         Alert.alert(
-            "Confirm Deletion",
-            "Are you sure you want to remove this ticket from your history? This action cannot be undone.",
+            "Xác nhận xóa vé",
+            "Bạn có chắc chắn xóa vé không? Việc này sẽ xóa thông tin vé và hệ thống sẽ tự động hoàn tiền cho bạn.",
             [
-                { text: "Cancel", style: "cancel" },
+                { text: "Hủy", style: "cancel" },
                 {
-                    text: "Remove",
+                    text: "Xóa",
                     style: "destructive",
                     onPress: async () => {
                         setLoading(true)
-                        const success = await mockRemoveTicket(ticketId);
+                        const success = await removeTicket(ticketId);
                         if (success) {
                             setTickets((prev) => prev.filter((t) => t.id !== ticketId));
                         }
@@ -231,7 +216,7 @@ export default function MyTicketsScreen() {
                     )}
                     ListEmptyComponent={
                         <View style={styles.centerContainer}>
-                            <Text style={styles.emptyText}>No tickets found.</Text>
+                            <Text style={styles.emptyText}>Bạn không có vé nào trong khoảng thời gian tới</Text>
                         </View>
                     }
                 />

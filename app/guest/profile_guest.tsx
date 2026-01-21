@@ -12,7 +12,6 @@ import {
 import {router, useLocalSearchParams} from "expo-router";
 import {doc, getDoc, setDoc, DocumentData} from 'firebase/firestore';
 import {db} from "@/FirebaseConfig";
-import {UserProfile} from "@firebase/auth";
 import {FontAwesome5, Ionicons} from "@expo/vector-icons"
 
 
@@ -51,7 +50,7 @@ const UserProfileScreen = () => {
         try {
             fetchUserProfile();
         } catch (error) {
-            Alert.alert('Error', 'Failed to load profile');
+            Alert.alert('Lỗi', 'Không thể cập nhật thông tin người dùng');
         }
     };
 
@@ -75,7 +74,7 @@ const UserProfileScreen = () => {
     // Handle Save (The 'Change' button)
     const handleSaveChanges = async () => {
         if (!tempData) {
-            Alert.alert('Validation', 'Hãy điền đầy đủ thông tin.');
+            Alert.alert('Lỗi', 'Hãy điền đầy đủ thông tin.');
             return;
         }
 
@@ -84,9 +83,9 @@ const UserProfileScreen = () => {
             await updateUserProfile(tempData);
             setUserData(tempData); // Update the "real" view with the new data
             setIsEditing(false);
-            Alert.alert('Success', 'Profile updated successfully!');
+            Alert.alert('Thành công', 'Cập nhật thông tin thành công!');
         } catch (error) {
-            Alert.alert('Error', 'Failed to update profile');
+            Alert.alert('Lỗi', 'Không thể cập nhật thông tin người dùng');
         } finally {
             setIsSaving(false);
         }
@@ -107,7 +106,7 @@ const UserProfileScreen = () => {
 
             {/* HEADER */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>User Profile</Text>
+                <Text style={styles.headerTitle}>Thông tin người dùng</Text>
 
                 <View style={styles.rightContainer}>
                     <TouchableOpacity onPress={handleEditPress}>
@@ -148,7 +147,7 @@ const UserProfileScreen = () => {
 
                     {/* Name Field */}
                     <View style={styles.fieldContainer}>
-                        <Text style={styles.label}>Full Name</Text>
+                        <Text style={styles.label}>Tên người dùng</Text>
                         {isEditing ? (
                             <TextInput
                                 style={styles.input}
@@ -166,7 +165,7 @@ const UserProfileScreen = () => {
 
                     {/* Phone Field */}
                     <View style={styles.fieldContainer}>
-                        <Text style={styles.label}>Phone Number</Text>
+                        <Text style={styles.label}>Số điện thoại</Text>
                         {isEditing ? (
                             <TextInput
                                 style={styles.input}
@@ -193,7 +192,7 @@ const UserProfileScreen = () => {
                                 onPress={handleCancelPress}
                                 disabled={isSaving}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={styles.cancelButtonText}>Hủy</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -204,18 +203,14 @@ const UserProfileScreen = () => {
                                 {isSaving ? (
                                     <ActivityIndicator color="#fff" size="small" />
                                 ) : (
-                                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                                    <Text style={styles.saveButtonText}>Lưu thay đổi</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
                     ) : (
                         <View></View>
-                        // <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
-                        //     <Text style={styles.editButtonText}>Edit Profile</Text>
-                        // </TouchableOpacity>
                     )}
                 </View>
-
             </View>
         </View>
     );
