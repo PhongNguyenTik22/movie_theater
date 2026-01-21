@@ -44,6 +44,13 @@ export default function App () {
                 if (role === 'admin') {
                     router.push("/admin/home_admin");
                 } else if (role === 'guest') {
+
+                    await user.reload();
+                    if (!user.emailVerified) {
+                        Alert.alert("Lỗi", "Email chưa được xác thực")
+                        return
+                    }
+
                     router.push({
                         pathname: "/guest/home_guest",
                         params: {
@@ -106,8 +113,8 @@ export default function App () {
                     <Text style={styles.LinkText}>Chưa có tài khoản? <Text style={{color: Colors.primary, fontWeight: 'bold'}}>Đăng ký</Text></Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity>
-                    <Text style={styles.LinkText}><Text style={{Color: Colors.primary, fontWeight: 'bold'}}>Quên mật khẩu?</Text></Text>
+                <TouchableOpacity onPress={()=> router.push("./forget_pass")}>
+                    <Text style={styles.LinkText}><Text style={{fontWeight: 'bold'}}>Quên mật khẩu?</Text></Text>
                 </TouchableOpacity>
             </View>
         </View>

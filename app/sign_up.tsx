@@ -4,7 +4,7 @@ import {
     View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet,
     StatusBar, ScrollView
 } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {createUserWithEmailAndPassword, sendEmailVerification} from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../FirebaseConfig.ts';
 import {Colors, styles} from "./default_style.tsx"
@@ -20,22 +20,20 @@ export default function SignUpScreen() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const [showPass, setShowPass] = useState(false);
 
     const handleSignUp = async () => {
         if (!fullName || !phone || !email || !password)
-            return Alert.alert('Lỗi", "Vui lòng điền đầy đủ thông tin!');
+            return Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
 
-        if (password !== confirmPassword) {
+        if (password !== confirmPassword)
             Alert.alert("Lỗi", "Mật khẩu nhập lại không khớp!");
-
-        setLoading(true);
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
+            await sendEmailVerification(user);
 
             await setDoc(doc(db, 'users', user.uid), {
                 role: 'guest',
@@ -45,15 +43,17 @@ export default function SignUpScreen() {
             });
 
             Alert.alert("Thành công",
-                "Tài khoản đã được tạo. Vui lòng đăng nhập.");
+                "Tài khoản đã được tạo. Vui lòng kiểm tra email để xác nhận tạo tài khoản.");
             router.push("/App");
 
         } catch (error: any) {
-            Alert.alert('Lỗi không thể đăng nhập', error.message);
-        } finally {
-            setLoading(false);
+            console.error(error);
+            if (error.code === 'auth/email-already-in-use')
+                Alert.alert('Tài khoản email đã tồn tại');
+            else Alert.alert('Lỗi không thể đăng kí tài khoản mới', error.message);
+            return
         }
-    }}
+    }
 
     return (
         <View style={styles.container}>
