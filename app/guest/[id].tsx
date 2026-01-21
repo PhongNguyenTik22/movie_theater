@@ -41,17 +41,21 @@ const MovieDetails_Admin = () => {
                 <View className= "flex-col items-start justify-center mt-5 px-5">
                     <Text className = "text-black font-bold text-xl"> {movie?.title}</Text>
 
-                    <View className= "flex-row items-center gap-x-1 mt-2">
+                    <View className= "flex-col items-center gap-x-1 mt-2">
                         <Text className="text-gray text-sm">
-                            {movie?.release_date?.split('-')[0]}
+                            Năm phát hành: {movie?.release_date?.split('-')[0]}
                         </Text>
                         <Text className="text-gray text-sm">
-                            {movie?.runtime}m {movie?.vote_average}/10 {movie?.vote_count}
+                            Thời lượng phim: {movie?.runtime}m
                         </Text>
+                        <Text className="text-gray text-sm">
+                            MetaScore: ⭐️{movie?.vote_average}/10
+                        </Text>
+
                     </View>
 
-                    <MovieInfo label="Overview" value={movie?.overview} />
-                    <MovieInfo label="Genres" value={movie?.genres?.map((g) => g.name).join(" - ") || "N/A"} />
+                    <MovieInfo label="Tổng quan" value={movie?.overview} />
+                    <MovieInfo label="Thể loại" value={movie?.genres?.map((g) => g.name).join(" - ") || "N/A"} />
                 </View>
 
                 <TouchableOpacity

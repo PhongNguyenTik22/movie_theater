@@ -3,9 +3,9 @@ import {
     ScrollView,
     Text,
     View,
-    ActivityIndicator, FlatList, StyleSheet, TouchableOpacity
+    ActivityIndicator, FlatList,  TouchableOpacity
 } from 'react-native';
-import {router, useRouter} from "expo-router";
+import {router} from "expo-router";
 import useFetch from "@/services/useFetch"
 import {fetchMovie} from "@/services/tdmb_api_config";
 import MovieCard from "@/app/admin/render_poster_admin";

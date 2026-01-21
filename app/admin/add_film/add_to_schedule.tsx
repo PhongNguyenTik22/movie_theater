@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useCallback} from 'react';
 import {
     View,
     Text,
@@ -6,31 +6,16 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
-    ActivityIndicator,
+    ActivityIndicator, FlatList,
 } from 'react-native';
 import {doc, DocumentData, getDoc, setDoc} from 'firebase/firestore';
 import {db} from '@/FirebaseConfig'
 import {useLocalSearchParams, useRouter, useFocusEffect} from 'expo-router'
 
-// --- Helper Functions ---
-
-// Generate next 10 days
-// const getNext10Days = () => {
-//     const dates = [];
-//     for (let i = 0; i < 10; i++) {
-//         const d = new Date();
-//         d.setDate(d.getDate() + i);
-//         dates.push(d);
-//     }
-//     return dates;
-// };
-
 // Format date for display (e.g., "Mon 27")
 const formatDateDisplay = (date : Date) => {
-    const day = date.getDate();
-    const options = { weekday: 'short', };
-    const weekdays = new Intl.DateTimeFormat('en-US').format(date);
-    return `${weekdays}\n${day}`;
+    let temp = formatDateID(date)
+    return temp.split('-')[0] + '-' + temp.split('-')[1]
 };
 
 // Format date for Database ID (e.g., "2023-10-27")
@@ -141,7 +126,7 @@ export const ScheduleScreen = () => {
     // 4. Handle Submission
     const handleAddToList = async () => {
         if (selectedQuery.length === 0) {
-            Alert.alert("Missing Info", "Please select at least one Date, Room, and Time.");
+            Alert.alert("Lỗi", "Chọn các mục dưới ít nhất 1 lần");
             return;
         }
 
@@ -168,10 +153,10 @@ export const ScheduleScreen = () => {
             }
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Failed to update schedule.");
+            Alert.alert("Lỗi", "Không thể cập nhật lịch chiếu.");
             router.back();
         } finally {
-            Alert.alert("Add to list", "Successfully added!");
+            Alert.alert("Thành công", "Thêm lịch chiếu thành công!");
             router.back();
         }
     };
@@ -183,7 +168,7 @@ export const ScheduleScreen = () => {
             {/* Header Info */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Thêm phim vào lịch chiếu</Text>
-                <Text style={styles.subHeader}>Select dates, rooms, and times below</Text>
+                <Text style={styles.subHeader}>Chọn ngày, phòng, và giờ chiếu</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -197,30 +182,31 @@ export const ScheduleScreen = () => {
                 ) : ( <View>
 
                 {/* SECTION 1: DATE BAR (Horizontal Scroll) */}
-                <Text style={styles.label}>1. Select Date(s)</Text>
+                <Text style={styles.label}>1. Chọn ngày</Text>
                 <View style={styles.dateBarContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {dates.map((date, index) => {
-                            const isSelected = formatDateID(selectedDate) === formatDateID(date);
+                    <FlatList
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        data={dates}
+                        renderItem={({item})=> {
+                            const isSelected = formatDateID(selectedDate) === formatDateID(item);
                             return (
                                 <TouchableOpacity
-                                    key={index}
                                     style={[styles.dateButton, isSelected && styles.dateButtonSelected]}
                                     onPress={() => {
-                                        setSelectedDate(date);
-                                    }}
-                                >
+                                        setSelectedDate(item);
+                                        }}
+                                    >
                                     <Text style={[styles.dateText, isSelected && styles.textSelected]}>
-                                        {formatDateDisplay(date)}
+                                           {formatDateDisplay(item)}
                                     </Text>
                                 </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
+                        );}}
+                    />
                 </View>
 
                 {/* SECTION 2: ROOM BAR */}
-                <Text style={styles.label}>2. Select Room(s)</Text>
+                <Text style={styles.label}>2. Chọn phòng chiếu</Text>
                 <View style={styles.rowContainer}>
                     {ROOMS.map((room) => {
                         const isSelected = selectedRoom === room;
@@ -241,7 +227,7 @@ export const ScheduleScreen = () => {
                 </View>
 
                 {/* SECTION 3: TIME BAR */}
-                <Text style={styles.label}>3. Select Time(s)</Text>
+                <Text style={styles.label}>3. Chọn giờ chiếu</Text>
                 <View style={styles.rowContainer}>
                     {TIMES.map((time) => {
                         const query = formatQuery(selectedDate, selectedRoom, time)
@@ -277,7 +263,7 @@ export const ScheduleScreen = () => {
                                 ]}>
                                     {time}
                                 </Text>
-                                {occupied && <Text style={styles.occupiedLabel}>Occupied</Text>}
+                                {occupied && <Text style={styles.occupiedLabel}>Đã có lịch</Text>}
                             </TouchableOpacity>
                         );
                     })}
@@ -298,7 +284,7 @@ export const ScheduleScreen = () => {
                     {loading ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.submitButtonText}>Add to List</Text>
+                        <Text style={styles.submitButtonText}>Thêm vào danh sách chiếu</Text>
                     )}
                 </TouchableOpacity>
             </View>

@@ -1,4 +1,4 @@
-export const tdmb_api_config = {
+export const tmdb_api_config = {
     BASE_URL: 'https://api.themoviedb.org/3',
     API_KEY: process.env.EXPO_PUBLIC_MOVIE_API_KEY,
     headers: {
@@ -9,12 +9,12 @@ export const tdmb_api_config = {
 
 export const fetchMovie = async ({query}: {query:string}) => {
     const endpoint = query
-        ? `${tdmb_api_config.BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
-        : `${tdmb_api_config.BASE_URL}/discover/movie?sort_by=popularity.desc&language=vn`;
+        ? `${tmdb_api_config.BASE_URL}/search/movie?query=${encodeURIComponent(query)}&language=vi`
+        : `${tmdb_api_config.BASE_URL}/discover/movie?sort_by=popularity.desc&language=vi`;
 
     const response = await fetch(endpoint, {
         method: 'GET',
-        headers: tdmb_api_config.headers,
+        headers: tmdb_api_config.headers,
     });
 
     if (!response.ok) {
@@ -29,9 +29,9 @@ export const fetchMovie = async ({query}: {query:string}) => {
 
 export const fetchMovieDetails = async (movieId:string): Promise<MovieDetails> => {
     try {
-        const response = await fetch(`${tdmb_api_config.BASE_URL}/movie/${movieId}?api_key=${tdmb_api_config.API_KEY}`, {
+        const response = await fetch(`${tmdb_api_config.BASE_URL}/movie/${movieId}?api_key=${tmdb_api_config.API_KEY}&language=vi`, {
             method: 'GET',
-            headers: tdmb_api_config.headers,
+            headers: tmdb_api_config.headers,
         })
 
         if (!response.ok) {
