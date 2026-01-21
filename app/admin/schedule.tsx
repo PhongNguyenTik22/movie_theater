@@ -68,6 +68,8 @@ export const ScheduleScreen = () => {
     // Selections (Multi-select enabled)
     const [selectedQuery, setSelectedQuery] = useState<string[]>([]);
 
+    // Data State
+    //const [datas, setDatas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -110,8 +112,6 @@ export const ScheduleScreen = () => {
     useFocusEffect(
         useCallback(()=> {
             setLoading(true);
-            dates = []
-            datas = []
             schedule_fetch();
         }, [movie.id])
     );
@@ -196,94 +196,94 @@ export const ScheduleScreen = () => {
                     />
                 ) : ( <View>
 
-                {/* SECTION 1: DATE BAR (Horizontal Scroll) */}
-                <Text style={styles.label}>1. Select Date(s)</Text>
-                <View style={styles.dateBarContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {dates.map((date, index) => {
-                            const isSelected = formatDateID(selectedDate) === formatDateID(date);
-                            return (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={[styles.dateButton, isSelected && styles.dateButtonSelected]}
-                                    onPress={() => {
-                                        setSelectedDate(date);
-                                    }}
-                                >
-                                    <Text style={[styles.dateText, isSelected && styles.textSelected]}>
-                                        {formatDateDisplay(date)}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-                </View>
+                        {/* SECTION 1: DATE BAR (Horizontal Scroll) */}
+                        <Text style={styles.label}>1. Select Date(s)</Text>
+                        <View style={styles.dateBarContainer}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                {dates.map((date, index) => {
+                                    const isSelected = formatDateID(selectedDate) === formatDateID(date);
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={[styles.dateButton, isSelected && styles.dateButtonSelected]}
+                                            onPress={() => {
+                                                setSelectedDate(date);
+                                            }}
+                                        >
+                                            <Text style={[styles.dateText, isSelected && styles.textSelected]}>
+                                                {formatDateDisplay(date)}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        </View>
 
-                {/* SECTION 2: ROOM BAR */}
-                <Text style={styles.label}>2. Select Room(s)</Text>
-                <View style={styles.rowContainer}>
-                    {ROOMS.map((room) => {
-                        const isSelected = selectedRoom === room;
-                        return (
-                            <TouchableOpacity
-                                key={room}
-                                style={[styles.roomButton, isSelected && styles.roomButtonSelected]}
-                                onPress={() => {
-                                    setSelectedRoom(room);
-                                }}
-                            >
-                                <Text style={[styles.btnText, isSelected && styles.textSelected]}>
-                                    Room {room}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
+                        {/* SECTION 2: ROOM BAR */}
+                        <Text style={styles.label}>2. Select Room(s)</Text>
+                        <View style={styles.rowContainer}>
+                            {ROOMS.map((room) => {
+                                const isSelected = selectedRoom === room;
+                                return (
+                                    <TouchableOpacity
+                                        key={room}
+                                        style={[styles.roomButton, isSelected && styles.roomButtonSelected]}
+                                        onPress={() => {
+                                            setSelectedRoom(room);
+                                        }}
+                                    >
+                                        <Text style={[styles.btnText, isSelected && styles.textSelected]}>
+                                            Room {room}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
 
-                {/* SECTION 3: TIME BAR */}
-                <Text style={styles.label}>3. Select Time(s)</Text>
-                <View style={styles.rowContainer}>
-                    {TIMES.map((time) => {
-                        const query = formatQuery(selectedDate, selectedRoom, time)
-                        const isSelected = selectedQuery.includes(query);
-                        const occupied = isTimeOccupied(selectedDate, selectedRoom, time);
-                        //console.log(occupied);
+                        {/* SECTION 3: TIME BAR */}
+                        <Text style={styles.label}>3. Select Time(s)</Text>
+                        <View style={styles.rowContainer}>
+                            {TIMES.map((time) => {
+                                const query = formatQuery(selectedDate, selectedRoom, time)
+                                const isSelected = selectedQuery.includes(query);
+                                const occupied = isTimeOccupied(selectedDate, selectedRoom, time);
+                                //console.log(occupied);
 
-                        // Occupied Styling Logic
-                        let buttonStyle = styles.timeButton;
-                        if (occupied) buttonStyle = styles.timeButtonOccupied; // Different color for occupied
-                        else if (isSelected) buttonStyle = styles.timeButtonSelected;
+                                // Occupied Styling Logic
+                                let buttonStyle = styles.timeButton;
+                                if (occupied) buttonStyle = styles.timeButtonOccupied; // Different color for occupied
+                                else if (isSelected) buttonStyle = styles.timeButtonSelected;
 
-                        return (
-                            <TouchableOpacity
-                                key={time}
-                                disabled={false} // Admin can override if they want, or set to true to lock
-                                style={buttonStyle}
-                                onPress={() => {
-                                    if (!occupied) {
-                                        if (isSelected) {
-                                            setSelectedQuery(selectedQuery.filter(id => id !== query));
-                                        }
-                                        else {
-                                            setSelectedQuery([...selectedQuery, query])
-                                        }
-                                    }
-                                }}
-                            >
-                                <Text style={[
-                                    styles.btnText,
-                                    isSelected && styles.textSelected,
-                                    occupied && styles.textOccupied
-                                ]}>
-                                    {time}
-                                </Text>
-                                {occupied && <Text style={styles.occupiedLabel}>Occupied</Text>}
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-                </View>
-            )}
+                                return (
+                                    <TouchableOpacity
+                                        key={time}
+                                        disabled={false} // Admin can override if they want, or set to true to lock
+                                        style={buttonStyle}
+                                        onPress={() => {
+                                            if (!occupied) {
+                                                if (isSelected) {
+                                                    setSelectedQuery(selectedQuery.filter(id => id !== query));
+                                                }
+                                                else {
+                                                    setSelectedQuery([...selectedQuery, query])
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <Text style={[
+                                            styles.btnText,
+                                            isSelected && styles.textSelected,
+                                            occupied && styles.textOccupied
+                                        ]}>
+                                            {time}
+                                        </Text>
+                                        {occupied && <Text style={styles.occupiedLabel}>Occupied</Text>}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+                )}
 
             </ScrollView>
 
@@ -292,7 +292,7 @@ export const ScheduleScreen = () => {
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={styles.submitButton}
-                    onPress={handleAddToList}
+                    // onPress={handleAddToList}
                     disabled={loading}
                 >
                     {loading ? (

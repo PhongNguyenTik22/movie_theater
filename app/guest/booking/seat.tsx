@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, {useEffect, useState} from 'react';
+import {useFocusEffect, useLocalSearchParams, useRouter} from 'expo-router';
+import React, {useCallback, useEffect, useState} from 'react';
 import {db} from '@/FirebaseConfig'
 import {doc, getDoc, setDoc} from 'firebase/firestore';
 import {
+    ActivityIndicator,
     Alert,
     Dimensions,
     SafeAreaView,
@@ -38,30 +39,29 @@ const SEAT_ROWS = [
 const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const COL_LABELS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
-const formatDateID = (date : Date) => {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-    const year = date.getFullYear();
+// const formatDateID = (date : Date) => {
+//     const day = String(date.getDate()).padStart(2, '0');
+//     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+//     const year = date.getFullYear();
+//
+//     return `${day}-${month}-${year}`;
+// };
+//
+// const formatSeatID = (row: number, col: number) => {
+//     return ROW_LABELS[row] + COL_LABELS[col];
+// }
+//
+// const formatTicketID = (
+//     date: string,
+//     room: string,
+//     time: string,
+//     seat: string,
+//     user: string) => {
+//     return date +  '_' + room + '_' + time + '_' + seat + '_' + user;
+// }
 
-    return `${day}-${month}-${year}`;
-};
-
-const formatSeatID = (row: number, col: number) => {
-    return ROW_LABELS[row] + COL_LABELS[col];
-}
-
-const formatTicketID = (
-    date: string,
-    room: string,
-    time: string,
-    seat: string,
-    user: string) => {
-    return date +  '_' + room + '_' + time + '_' + seat + '_' + user;
-}
-
-const extractSeatID = (ticket_id: string) => {
-    const temp = ticket_id.split('_')[3];
-    return temp;
+const extractID = (ticket_id: string, item: number) => {
+    return ticket_id.split('_')[item];
 }
 
 let occupied: string [] = []
@@ -70,58 +70,56 @@ export default function BookingScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
 
-    // lấy dữ liệu vé ngồi, nếu ko có thì tạo doc mới
-    useEffect(() => {
-        const getBookedSeat = async () => {
-            try {
-                //@ts-ignore
-                const id: string = params.date;
-                const ref = doc(db, 'ticket', id);
-                const snapshot = await getDoc(ref);
+    const [loading, setLoading] = useState(true);
 
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    occupied = data.ticket;
-                } else {
-                    await setDoc(ref, {
-                        ticket: []
-                    })
+    const getBookedSeat = async () => {
+        let ticket_data: string[] = [];
+        try {
+            //@ts-ignore
+            const id: string = params.date;
+            const ref = doc(db, 'ticket', id);
+            const snapshot = await getDoc(ref);
+
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                ticket_data = data.ticket;
+            } else {
+                await setDoc(ref, {
+                    ticket: []
+                })
+            }
+        }
+        catch (error)
+        {
+            console.error(error)
+            Alert.alert("Error", "Fetch database failed.");
+        }
+
+        for (let i = 0; i < ticket_data.length; i++)
+        {
+            if (extractID(ticket_data[i], 0) === params.date
+            && extractID(ticket_data[i], 1) === params.room
+            && extractID(ticket_data[i], 2) === params.time)
+            {
+                ticket_data[i] = extractID(ticket_data[i], 3);
+                let temp = ticket_data[i].split(',')
+                for (let i = 0; i < temp.length; i++) {
+                    occupied.push(temp[i]);
                 }
             }
-            catch (error)
-            {
-                console.error(error)
-                Alert.alert("Error", "Fetch database failed.");
-            }
-
         }
-
-        getBookedSeat();
-        for (let i = 0; i < occupied.length; i++)
-        {
-            occupied[i] = extractSeatID(occupied[i]);
-        }
-    }, []);
+        setLoading(false);
+    }
 
 
-
-    // --- 1. HÀM XỬ LÝ DỮ LIỆU TỪ TRANG TRƯỚC ---
-    // // Dịch ID rạp sang Tên rạp
-    // const getCinemaName = (id) => {
-    //     const map = {
-    //         'c1': 'CGV Vincom',
-    //         'c2': 'CGV Crescent Mall',
-    //         'c3': 'CGV Landmark 81'
-    //     };
-    //     return map[id] || 'CGV Vincom';
-    // };
-
-    // Dịch ID ngày sang Ngày/Tháng (Giả sử khớp với dữ liệu trang trước)
-    // const getDateLabel = (id) => {
-    //     // Vì trang trước bạn truyền ID (1,2,3...), ta map tạm sang ngày
-    //     const map = { '1': '18/11', '2': '19/11', '3': '20/11', '4': '21/11', '5': '22/11' };
-    //     return map[id] || '20/11';
-    // };
+    // lấy dữ liệu vé ngồi, nếu ko có thì tạo doc mới
+    useFocusEffect(
+        useCallback(()=>{
+            //setLoading(true);
+            occupied = []
+            getBookedSeat()
+        }, [])
+    )
 
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
@@ -166,7 +164,6 @@ export default function BookingScreen() {
     return (
         <View style={styles.container}>
 
-            {/* 2. HEADER: ĐÃ CẬP NHẬT HIỂN THỊ ĐÚNG DỮ LIỆU */}
             <View style={styles.header}>
                 <View style={styles.headerContent}>
                     <TouchableOpacity onPress={() => router.back()}>
@@ -185,6 +182,13 @@ export default function BookingScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollBody} showsVerticalScrollIndicator={false}>
+                {loading ? (
+                    <ActivityIndicator
+                        size = "large"
+                        color = "#0000FF"
+                        className="mt-10 self-center"
+                    />
+                ) : (<View>
                 <View style={styles.screenContainer}>
                     <View style={styles.screenCurve} />
                     <Text style={styles.screenLabel}>MÀN HÌNH</Text>
@@ -208,6 +212,7 @@ export default function BookingScreen() {
                         </View>
                     ))}
                 </View>
+                </View>)}
             </ScrollView>
 
             {/* FOOTER */}

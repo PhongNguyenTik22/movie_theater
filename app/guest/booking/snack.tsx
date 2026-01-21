@@ -22,9 +22,9 @@ const Colors = {
 
 // --- DỮ LIỆU MOCK BẮP NƯỚC ---
 const SNACK_MENU = [
-    { id: '1', name: 'Combo 1', desc: '1 Bắp + 1 Nước', price: 90000, color: '#10B981', icon: 'fast-food' },
-    { id: '2', name: 'Bắp Phô Mai', desc: 'Size L', price: 50000, color: '#F59E0B', icon: 'nutrition' },
-    { id: '3', name: 'Nước Ngọt', desc: 'Pepsi/Coca', price: 35000, color: '#3B82F6', icon: 'beer' },
+    { id: 1, name: 'Combo 1', desc: '1 Bắp + 1 Nước', price: 80000, color: '#10B981', icon: 'fast-food' },
+    { id: 2, name: 'Bắp Phô Mai', desc: 'Size L', price: 50000, color: '#F59E0B', icon: 'nutrition' },
+    { id: 3, name: 'Nước Ngọt', desc: 'Pepsi/Coca', price: 35000, color: '#3B82F6', icon: 'beer' },
 ];
 
 export default function SnackScreen() {
@@ -38,7 +38,7 @@ export default function SnackScreen() {
 
     // --- STATE QUẢN LÝ SỐ LƯỢNG ---
     // Tạo mảng state lưu số lượng từng món, mặc định là 0
-    const [quantities, setQuantities] = useState([0, 0, 0])
+    const [quantities, setQuantities] = useState([0, 0, 0, 0])
 
     // Hàm tăng giảm
     const updateQuantity = (id : number, change : number) => {
@@ -58,12 +58,11 @@ export default function SnackScreen() {
 
     const handleSetUpTicket = async (ticket: any)=> {
         try {
-            let query = ticket.date + '_' + ticket.room + '_' + ticket.time
-                + '_' + ticket.seat + '_';
-            for (let i = 0 ; i < quantities.length; i++) {
+            let query = ticket.date + '_' + ticket.room + '_' + ticket.time + '_' + ticket.seats + '_';
+            for (let i = 1 ; i < 4; i++) {
                 query = query + String(quantities[i]) + ',';
             }
-            query = query + '_' + ticket.user + '_' + ticket.movieName;
+            query = query + '_' + ticket.user + '_' + ticket.name;
 
             const doc_id = ticket.date;
             const ref = doc(db, 'ticket', doc_id);
@@ -166,20 +165,13 @@ export default function SnackScreen() {
                     <TouchableOpacity
                         style={styles.btnNext}
                         onPress={() => {
-                            // tạm thời chưa xét thanh toán tiền thật
                             handleSetUpTicket(params);
-                            router.push('/guest/home_guest')
-
-
-                            // Chuyển sang trang Thanh toán
-                            // router.push({
-                            //     pathname: '/payment', // Chúng ta sẽ tạo trang này tiếp theo
-                            //     params: {
-                            //         ...params, // Giữ lại thông tin phim, rạp, ngày, ghế
-                            //         snackTotal: snackTotal,
-                            //         totalAmount: grandTotal
-                            //     }
-                            // });
+                            router.push({
+                                pathname: '/guest/home_guest',
+                                params: {
+                                    user: params.user
+                                }
+                            })
                         }}
                     >
                         <Text style={styles.btnText}>TIẾP TỤC</Text>

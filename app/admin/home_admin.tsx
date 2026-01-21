@@ -1,25 +1,22 @@
-// screens/AdminScreen.tsx
-import React, {Fragment, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     ScrollView,
-    StyleSheet,
     Text,
-    TouchableOpacity,
     View,
-    ActivityIndicator, FlatList
+    ActivityIndicator, FlatList, StyleSheet, TouchableOpacity
 } from 'react-native';
-import {useRouter} from "expo-router";
+import {router, useRouter} from "expo-router";
 import useFetch from "@/services/useFetch"
 import {fetchMovie} from "@/services/tdmb_api_config";
 import MovieCard from "@/app/admin/render_poster_admin";
 import {styles} from "@/app/default_style"
 import SearchBar from "@/app/components/SearchBar_cus"
+import {FontAwesome5} from "@expo/vector-icons";
 
 
 export default function Home_admin_screen() {
-    const router = useRouter();
+    // const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
-
 
     const {
         data: movies,
@@ -59,6 +56,10 @@ export default function Home_admin_screen() {
                         />
                     </View>
 
+                    <TouchableOpacity onPress={()=>router.push("./schedule")}>
+                        <FontAwesome5 name={"calendar-alt"} size={20} color={"black"}></FontAwesome5>
+                    </TouchableOpacity>
+
                     {moviesloading ? (
                         <ActivityIndicator
                             size = "large"
@@ -95,65 +96,10 @@ export default function Home_admin_screen() {
                     scrollEnabled={false}
                     />
 
-
             </ScrollView>
+
         </View>
-
-
-
     )
-    // return (
-    //     <View style={styles.container}>
-    //
-    //         {/* --- PHẦN 1: HEADER (MÀU XANH) --- */}
-    //         <View style={styles.headerContainer}>
-    //             <View style={styles.headerContent}>
-    //                 {/* Logo */}
-    //                 <Text style={styles.logoText}>CINEBOOK</Text>
-    //
-    //                 {/* Thanh tìm kiếm */}
-    //                 <View style={styles.searchBar}>
-    //                     <Text style={styles.searchText}>Search</Text>
-    //                     <Ionicons name="search" size={20} color="black" />
-    //                 </View>
-    //             </View>
-    //         </View>
-    //
-    //         {/* --- PHẦN THÂN TRANG (Cuộn được) --- */}
-    //         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-    //
-    //             {/* --- PHẦN 2: BANNER --- */}
-    //             <View style={styles.bannerContainer}>
-    //                 <Image source={BANNER_MOVIE.image} style={styles.bannerImage} />
-    //                 {/* Nút Đặt Ngay màu đỏ đè lên ảnh */}
-    //                 <TouchableOpacity style={styles.bookingBtn} onPress={() => navigation.navigate('MovieDetail', { movieId: item.id })}
-    //                     <Text style={styles.bookingText}>Đặt ngay</Text>
-    //                 </TouchableOpacity>
-    //             </View>
-    //
-    //             {/* --- PHẦN 3: DANH SÁCH PHIM --- */}
-    //             <View style={styles.listSection}>
-    //                 <Text style={styles.sectionTitle}>Đang chiếu</Text>
-    //
-    //                 {/* Grid Layout (Xếp lưới) */}
-    //                 <View style={styles.gridContainer}>
-    //                     {MOVIES.map((item) => (
-    //                         <TouchableOpacity
-    //                             key={item.id}
-    //                             style={styles.movieItem}
-    //                             onPress={() => goToDetail(item)}
-    //                         >
-    //                             <Image source={item.image} style={styles.moviePoster} />
-    //                             <Text style={styles.movieName} numberOfLines={1}>{item.name}</Text>
-    //                         </TouchableOpacity>
-    //                     ))}
-    //                 </View>
-    //             </View>
-    //
-    //         </ScrollView>
-    //     </View>
-    // );
-
 }
 
 

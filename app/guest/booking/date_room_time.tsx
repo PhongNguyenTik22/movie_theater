@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
-    FlatList,  Alert
+    FlatList, Alert, ActivityIndicator
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {db} from '@/FirebaseConfig'
 import {doc, getDoc, setDoc} from 'firebase/firestore';
@@ -30,12 +30,14 @@ const formatDateID = (date : Date) => {
     return `${day}-${month}-${year}`;
 };
 
+const removeYear = (date : string) => {
+    return date.split('-')[0] + '-' + date.split('-')[1];
+}
+
 
 let dates: Date[] = []
 let datas: string[] = []
 let avai_date: string[] = []
-
-
 
 const ROOMS = [1, 2, 3];
 const TIMES = ['08:00', '12:00', '16:00'];
@@ -46,46 +48,52 @@ export default function SelectShowtimeScreen() {
 
     // --- STATE QUẢN LÝ LỰA CHỌN ---
     const [selectedDate, setSelectedDate] = useState('');
-    const [selectedRoom, setSelectedRoom] = useState(''); // Mặc định rạp đầu
-    const [selectedTime, setSelectedTime] = useState(''); // Chưa chọn giờ
+    const [selectedRoom, setSelectedRoom] = useState('');
+    const [selectedTime, setSelectedTime] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try{
-                for (let i = 0; i < 10; i++) {
-                    const d = new Date();
-                    d.setDate(d.getDate() + i);
-                    dates.push(d);
-                }
+    const fetchData = async () => {
+        try{
+            for (let i = 0; i < 10; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                dates.push(d);
+            }
 
-                // fetch the collection
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        const doc_id = formatDateID(dates[i]) + "_p" + ROOMS[j];
-                        const ref = doc(db, 'schedule', doc_id);
-                        const snapshot = await getDoc(ref);
+            // fetch the collection
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const doc_id = formatDateID(dates[i]) + "_p" + ROOMS[j];
+                    const ref = doc(db, 'schedule', doc_id);
+                    const snapshot = await getDoc(ref);
 
-                        if (snapshot.exists()) {
-                            //console.log(datas.length);
-                            const temp = snapshot.data()
-                            if (temp.t0800 === params.id) datas.push(doc_id + '_' + '08:00');
-                            if (temp.t1200 === params.id) datas.push(doc_id + '_' + '12:00');
-                            if (temp.t1600 === params.id) datas.push(doc_id + '_' + '16:00');
-                        }
+                    if (snapshot.exists()) {
+                        //console.log(datas.length);
+                        const temp = snapshot.data()
+                        if (temp.t0800 === params.id) datas.push(doc_id + '_' + '08:00');
+                        if (temp.t1200 === params.id) datas.push(doc_id + '_' + '12:00');
+                        if (temp.t1600 === params.id) datas.push(doc_id + '_' + '16:00');
                     }
                 }
-            } catch (error) {
-                console.error(error);
             }
+        } catch (error) {
+            console.error(error);
         }
 
-        fetchData();
         for (let i = 0; i< datas.length; i++) {
             let temp = datas[i].split('_')[0];
             if (!avai_date.includes(temp)) avai_date.push(temp);
         }
 
-    }, [])
+        setLoading(false);
+    }
+
+    useFocusEffect(
+        useCallback(()=>{
+            setLoading(true)
+            fetchData()
+        }, [])
+    )
 
     const avai_room = (date: string) => {
         let room : string[] = []
@@ -135,7 +143,7 @@ export default function SelectShowtimeScreen() {
                         <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <View style={{ marginLeft: 15 }}>
-                        <Text style={styles.headerTitle}>{params.movieName || 'Tên Phim'}</Text>
+                        <Text style={styles.headerTitle}>{params.name || 'Tên Phim'}</Text>
                         <Text style={styles.headerSub}>Chọn ngày chiếu và suất chiếu</Text>
                     </View>
                 </View>
@@ -143,6 +151,13 @@ export default function SelectShowtimeScreen() {
 
             <ScrollView contentContainerStyle={styles.body}>
 
+                {loading ? (
+                    <ActivityIndicator
+                        size = "large"
+                        color = "#0000FF"
+                        className="mt-10 self-center"
+                    />
+                ) : ( <View>
                 {/* 2. CHỌN NGÀY (SCROLL NGANG) */}
                 <Text style={styles.sectionTitle}>Chọn ngày</Text>
                 <View style={{ height: 80 }}>
@@ -159,7 +174,7 @@ export default function SelectShowtimeScreen() {
                                     onPress={() => setSelectedDate(item)}
                                 >
                                     {/*<Text style={[styles.dateDay, isSelected && styles.textWhite]}>{item.day}</Text>*/}
-                                    <Text style={[styles.dateNum, isSelected && styles.textWhite]}>{item}</Text>
+                                    <Text style={[styles.dateNum, isSelected && styles.textWhite]}>{removeYear(item)}</Text>
                                 </TouchableOpacity>
                             );
                         }}
@@ -203,7 +218,7 @@ export default function SelectShowtimeScreen() {
                         );
                     })}
                 </View>
-
+                </View>)}
             </ScrollView>
 
             {/* 5. FOOTER */}

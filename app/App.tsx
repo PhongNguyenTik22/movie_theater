@@ -105,6 +105,10 @@ export default function App () {
                 <TouchableOpacity onPress={() => router.push("/sign_up")}>
                     <Text style={styles.LinkText}>Chưa có tài khoản? <Text style={{color: Colors.primary, fontWeight: 'bold'}}>Đăng ký</Text></Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity>
+                    <Text style={styles.LinkText}><Text style={{Color: Colors.primary, fontWeight: 'bold'}}>Quên mật khẩu?</Text></Text>
+                </TouchableOpacity>
             </View>
         </View>
     );

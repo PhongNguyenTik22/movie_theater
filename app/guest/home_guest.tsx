@@ -1,40 +1,23 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     Image,
-    SafeAreaView,
     ScrollView,
-    StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
-    Dimensions, Alert, ActivityIndicator, FlatList
+    Dimensions, Alert, FlatList, ActivityIndicator
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Để lấy icon kính lúp
+import AntDesign from '@expo/vector-icons/AntDesign';
 import {db} from '@/FirebaseConfig'
-import {doc, DocumentData, getDoc, setDoc} from 'firebase/firestore';
-import {useLocalSearchParams, useRouter} from "expo-router";
-import useFetch from "@/services/useFetch"
+import {doc, getDoc, setDoc} from 'firebase/firestore';
+import {useFocusEffect, useLocalSearchParams, useRouter} from "expo-router";
 import {fetchMovie, fetchMovieDetails} from "@/services/tdmb_api_config";
-import MovieCard from "@/app/guest/render_poster_guest";
 import {styles} from "@/app/default_style"
-import SearchBar from "@/app/components/SearchBar_cus"
 
-
-
-// Lấy chiều rộng màn hình để chia cột cho đẹp
-const { width } = Dimensions.get('window');
-const COLUMN_COUNT = 3;
-const ITEM_WIDTH = (width - 40) / COLUMN_COUNT - 10; // Trừ padding 2 bên và khoảng cách giữa các ảnh
-
-// --- MÀU SẮC THEO THIẾT KẾ ---
-const Colors = {
-    headerBg: '#00ADEF', // Màu xanh nền header
-    background: '#FFFFFF',
-    text: '#000000',
-    redBtn: '#E50914', // Màu đỏ nút Đặt ngay
-    grayInput: '#E0E0E0',
-};
+// // Lấy chiều rộng màn hình để chia cột cho đẹp
+// const { width } = Dimensions.get('window');
+// const COLUMN_COUNT = 3;
+// const ITEM_WIDTH = (width - 40) / COLUMN_COUNT - 10; // Trừ padding 2 bên và khoảng cách giữa các ảnh
 
 const formatDateID = (date : Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -53,62 +36,52 @@ export default function HomeScreen() {
     const [movies, setMovies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const update_available = async () => {
-            const d = new Date();
-            const doc_id = formatDateID(d);
-            const ref = doc(db, 'available_film', doc_id);
-            let dates: Date[] = [];
-            const ROOMS = [1, 2, 3];
-            for (let i = 0; i < 10; i++) {
-                const d2 = new Date();
-                d2.setDate(d2.getDate() + i);
-                dates.push(d2);
-            }
+    const get_movies = async () => {
+        const d = new Date();
+        const doc_id = formatDateID(d);
+        const ref = doc(db, 'available_film', doc_id);
+        let dates: Date[] = [];
+        const ROOMS = [1, 2, 3];
+        for (let i = 0; i < 10; i++) {
+            const d2 = new Date();
+            d2.setDate(d2.getDate() + i);
+            dates.push(d2);
+        }
 
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 3; j++) {
-                    const doc_id2 = formatDateID(dates[i]) + "_p" + ROOMS[j];
-                    const ref2 = doc(db, 'schedule', doc_id2);
-                    const snapshot2 = await getDoc(ref2);
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 3; j++) {
+                const doc_id2 = formatDateID(dates[i]) + "_p" + ROOMS[j];
+                const ref2 = doc(db, 'schedule', doc_id2);
+                const snapshot2 = await getDoc(ref2);
 
-                    if (snapshot2.exists()) {
-                        const data = snapshot2.data();
-                        if (data.t0800 !== '' && !id_list.includes(data.t0800)) id_list.push(data.t0800);
-                        if (data.t1200 !== '' && !id_list.includes(data.t1200)) id_list.push(data.t1200);
-                        if (data.t1600 !== '' && !id_list.includes(data.t1600)) id_list.push(data.t1600);
-                    }
+                if (snapshot2.exists()) {
+                    const data = snapshot2.data();
+                    if (data.t0800 !== '' && !id_list.includes(data.t0800)) id_list.push(data.t0800);
+                    if (data.t1200 !== '' && !id_list.includes(data.t1200)) id_list.push(data.t1200);
+                    if (data.t1600 !== '' && !id_list.includes(data.t1600)) id_list.push(data.t1600);
                 }
             }
-            await setDoc(ref, {
-                idList: id_list,
-            })
         }
+        await setDoc(ref, {
+            idList: id_list,
+        })
 
         try {
-            update_available();
+            const results = await Promise.all(id_list.map(id => fetchMovieDetails(id)));
+            setMovies(results.filter(Boolean));
         } catch (error) {
-            console.log(error);
-            Alert.alert("Error", "Can't fetch movie data");
+            console.error('Error fetching movies:', error);
         }
-    }, [])
 
-    useEffect(() => {
-        const fetchAllMovies = async () => {
-            try {
-                // Fetch all movie details in parallel
-                const results = await Promise.all(id_list.map(id => fetchMovieDetails(id)));
-                // Filter out failed/null results
-                setMovies(results.filter(Boolean));
-            } catch (error) {
-                console.error('Error fetching movies:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+        setLoading(false);
+    }
 
-        fetchAllMovies();
-    }, []);
+    useFocusEffect(
+        useCallback(()=>{
+            setLoading(true);
+            get_movies();
+        }, [])
+    );
 
     return (
         <View style={styles.container}>
@@ -124,30 +97,36 @@ export default function HomeScreen() {
                     {/*        onChangeText={(text: string) => setSearchQuery(text)}*/}
                     {/*    />*/}
                     {/*</View>*/}
+                    <TouchableOpacity onPress={()=>router.push({
+                            pathname:'./profile_guest',
+                            params: params
+                        })}>
+                        <AntDesign name={"user"} size={20} color={"black"} />
+                    </TouchableOpacity>
 
-                    {/*{moviesloading ? (*/}
-                    {/*    <ActivityIndicator*/}
-                    {/*        size = "large"*/}
-                    {/*        color = "#0000FF"*/}
-                    {/*        className="mt-10 self-center"*/}
-                    {/*    />*/}
-                    {/*) : movieserror ? (*/}
-                    {/*    <Text>*/}
-                    {/*        Error: {movieserror?.message}*/}
-                    {/*    </Text>*/}
-                    {/*) : <View></View>*/}
-                    {/*}*/}
+
                 </View>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 20}}>
+
+                {loading ? (
+                    <ActivityIndicator
+                        size="large"
+                        color = "#0000FF"
+                        className="mt-10 self-center"
+                    />
+                ) : ( <View>
+                <View>
+                    <Text>Danh sách phim chiếu</Text>
+                </View>
 
                 <FlatList
                     data={movies}
                     renderItem={({item}) => (
                         <TouchableOpacity className="w-[30%]"
                                           onPress={() => {
-                                              console.log(item.id);
+                                              //console.log(item.id);
                                               router.push({
                                                   pathname: `./${item.id}`,
                                                   params: {
@@ -182,7 +161,7 @@ export default function HomeScreen() {
                     scrollEnabled={false}
                 />
 
-
+                </View>)}
             </ScrollView>
         </View>
     )
