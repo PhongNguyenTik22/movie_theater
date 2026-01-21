@@ -28,7 +28,7 @@ export default function SignUpScreen() {
             return Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
 
         if (password !== confirmPassword)
-            Alert.alert("Lỗi", "Mật khẩu nhập lại không khớp!");
+            return Alert.alert("Lỗi", "Mật khẩu nhập lại không khớp!");
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
